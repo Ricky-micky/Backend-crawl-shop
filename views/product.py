@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Product, User, db
+from models import Product, User, db,Shop
 from datetime import datetime
 
 # Define the Blueprint
@@ -12,7 +12,6 @@ def is_admin():
     user = User.query.get(user_id)
     return user and user.is_admin
 
-# Create a new product (Admin only)
 @product_bp.route('/products', methods=['POST'])
 @jwt_required()
 def create_product():
@@ -32,16 +31,25 @@ def create_product():
     if not product_name or not product_price or not product_url or not shop_name:
         return jsonify({"message": "Product name, price, URL, and shop name are required"}), 400
 
-    # Create a new product
+    # Find the shop by name (this is assuming shop_name exists)
+    shop = Shop.query.filter_by(name=shop_name).first()
+
+    # If the shop doesn't exist, return an error
+    if not shop:
+        return jsonify({"message": "Shop not found"}), 404
+
+    # Create a new product and associate the shop by its shop_id
     new_product = Product(
         product_name=product_name,
         product_price=product_price,
         product_rating=product_rating,
         product_url=product_url,
         delivery_cost=delivery_cost,
-        shop_name=shop_name,
-        payment_mode=payment_mode
+        shop_name=shop_name,  # You may still keep this field if you want to store it as well
+        payment_mode=payment_mode,
+        shop_id=shop.id  # Here you associate the product with the shop using shop_id
     )
+
     db.session.add(new_product)
     db.session.commit()
 
@@ -59,6 +67,7 @@ def create_product():
             "created_at": new_product.created_at.isoformat() if new_product.created_at else None
         }
     }), 201
+
 
 # Fetch all products (Public access)
 @product_bp.route('/products', methods=['GET'])
