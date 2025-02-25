@@ -18,6 +18,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable modification tra
 db.init_app(app)  # Initialize db with the app
 migrate = Migrate(app, db)  # Initialize migrations with the app and db
 
+
 # JWT configuration
 app.config["JWT_SECRET_KEY"] = "fghsgdgfdsgf"  # Secret key for JWT
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=2)  # Set the expiration time for access tokens

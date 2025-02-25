@@ -138,14 +138,18 @@ def update_user():
     return jsonify({"message": "User updated successfully"}), 200
 
 # Delete a user (requires authentication)
-@user_bp.route('/delete', methods=['DELETE'])
+@user_bp.route('/<int:user_id>', methods=['DELETE'])
 @jwt_required()
-def delete_user():
+def delete_user(user_id):
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
 
+# Only admins or the user themselves can delete the account
+    
+
+    user = User.query.get(user_id)
     if not user:
-        return jsonify({"message": "User not found"}), 404
+        return jsonify({"error": "User not found"}), 404
 
     db.session.delete(user)
     db.session.commit()
