@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate  # For database migrations
 from flask_jwt_extended import JWTManager  # For JWT authentication
 from flask_cors import CORS  # For handling CORS
-
+from flask_mail import Mail
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -23,6 +23,25 @@ migrate = Migrate(app, db)  # Initialize migrations with the app and db
 app.config["JWT_SECRET_KEY"] = "fghsgdgfdsgf"  # Secret key for JWT
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=2)  # Set the expiration time for access tokens
 jwt = JWTManager(app)  # Initialize JWTManager
+
+# Flask mail configuration
+app.config["MAIL_SERVER"] = 'smtp.gmail.com'
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USE_SSL"] = False
+app.config["MAIL_USERNAME"] = "blessed.wesonga@student.moringaschool.com"
+app.config["MAIL_PASSWORD"] = "delu jsnj cjhz szqg"
+app.config["MAIL_DEFAULT_SENDER"] = "blessed.wesonga@student.moringaschool.com"
+
+# Initialize Flask-Mail
+mail = Mail(app)
+
+# Import the set_mail_instance function from views.Auth
+from views.auth import set_mail_instance
+
+# Set the mail instance for the auth_bp Blueprint
+set_mail_instance(mail)
+
 
 # Import and register blueprints (Ensure these views exist)
 from views import *

@@ -45,18 +45,22 @@ def create_shop():
     }), 201
 
 # Fetch all shops (Public access)
+# Fetch all shops (Public access)
 @shop_bp.route('/shops', methods=['GET'])
 def get_all_shops():
     shops = Shop.query.all()
     shops_list = []
     for shop in shops:
+        # Use 'shop_products' relationship to get the products count
         shops_list.append({
             "id": shop.id,
             "name": shop.name,
             "url": shop.url,
-            "products_count": len(shop.products)  # Optional: Include the number of related products
+            "products_count": len(shop.shop_products)  # Correct attribute to access related products
         })
     return jsonify(shops_list), 200
+
+
 
 # Fetch a single shop by ID (Public access)
 @shop_bp.route('/shops/<int:shop_id>', methods=['GET'])

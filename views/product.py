@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Product, User, db
+from models import Product, User, db,Shop
 from datetime import datetime
 
 # Define the Blueprint
@@ -12,53 +12,45 @@ def is_admin():
     user = User.query.get(user_id)
     return user and user.is_admin
 
-# Create a new product (Admin only)
 @product_bp.route('/products', methods=['POST'])
-@jwt_required()
+@jwt_required()  # Ensure the user is authenticated
 def create_product():
-    if not is_admin():
-        return jsonify({"message": "Only admins can create products"}), 403
-
+    """
+    Create a new product.
+    """
     data = request.get_json()
-    product_name = data.get('product_name')
-    product_price = data.get('product_price')
-    product_rating = data.get('product_rating')
-    product_url = data.get('product_url')
-    delivery_cost = data.get('delivery_cost')
-    shop_name = data.get('shop_name')
-    payment_mode = data.get('payment_mode')
 
     # Validate required fields
-    if not product_name or not product_price or not product_url or not shop_name:
-        return jsonify({"message": "Product name, price, URL, and shop name are required"}), 400
+    if not data.get("product_name") or not data.get("product_price") or not data.get("shop_id"):
+        return jsonify({"message": "Product name, price, and shop_id are required"}), 400
 
-    # Create a new product
+    # Check if the shop exists
+    shop = Shop.query.get(data.get("shop_id"))
+    if not shop:
+        return jsonify({"message": "Shop not found"}), 404
+
+    # Create the new product instance
     new_product = Product(
-        product_name=product_name,
-        product_price=product_price,
-        product_rating=product_rating,
-        product_url=product_url,
-        delivery_cost=delivery_cost,
-        shop_name=shop_name,
-        payment_mode=payment_mode
+        product_name=data.get("product_name"),
+        product_price=data.get("product_price"),
+        product_rating=data.get("product_rating", None),  # Default to None if not provided
+        product_url=data.get("product_url", None),  # Default to None if not provided
+        delivery_cost=data.get("delivery_cost", None),  # Default to None if not provided
+        shop_name=data.get("shop_name"),  # Can be used as additional info or can be fetched from shop
+        payment_mode=data.get("payment_mode", None),  # Default to None if not provided
+        shop_id=data.get("shop_id")  # Foreign key reference
     )
+
+    # Add product to the session and commit to the database
     db.session.add(new_product)
     db.session.commit()
 
+    # Return the response with the created product ID
     return jsonify({
         "message": "Product created successfully",
-        "product": {
-            "id": new_product.id,
-            "product_name": new_product.product_name,
-            "product_price": new_product.product_price,
-            "product_rating": new_product.product_rating,
-            "product_url": new_product.product_url,
-            "delivery_cost": new_product.delivery_cost,
-            "shop_name": new_product.shop_name,
-            "payment_mode": new_product.payment_mode,
-            "created_at": new_product.created_at.isoformat() if new_product.created_at else None
-        }
+        "id": new_product.id
     }), 201
+
 
 # Fetch all products (Public access)
 @product_bp.route('/products', methods=['GET'])
