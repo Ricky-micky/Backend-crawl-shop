@@ -75,29 +75,25 @@ def request_password_reset():
         logger.error(f"Error sending email to {email}: {str(e)}")
         return jsonify({"message": "Error sending email", "error": str(e)}), 500
 
-# Reset Password
+# Reset Password Route (in views/auth.py)
 @auth_bp.route('/reset-password/<token>', methods=['POST'])
 def reset_password(token):
-    data = request.json
-    new_password = data.get('new_password')
-
-    if not new_password:
-        return jsonify({"message": "New password is required"}), 400
-
     try:
-        email = serializer.loads(token, salt="password-reset-salt", max_age=3600)  # Token valid for 1 hour
+        # Validate the token and check expiration
+        email = serializer.loads(token, salt="password-reset-salt", max_age=1)
+        
+        # Find the user by email
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+        
+        # Update the user's password
+        new_password = request.json.get('new_password')
+        user.password_hash = generate_password_hash(new_password)
+        db.session.commit()
+        
+        return jsonify({"message": "Password reset successfully"}), 200
     except SignatureExpired:
         return jsonify({"message": "Token expired"}), 400
-    except Exception:
+    except:
         return jsonify({"message": "Invalid token"}), 400
-
-    user = User.query.filter_by(email=email).first()
-
-    if not user:
-        return jsonify({"message": "User with this email does not exist"}), 404
-
-    # Update the user's password
-    user.password_hash = generate_password_hash(new_password)
-    db.session.commit()
-    return jsonify({"message": "Password reset successfully"}), 200
-    
