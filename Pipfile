@@ -14,6 +14,7 @@ werkzeug = "*"
 flask-login = "*"
 bcrypt = "*"
 flask-dance = {extras = ["google"], version = "*"}
+pytest = "*"
 
 [dev-packages]
 
